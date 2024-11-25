@@ -7,7 +7,6 @@
         "microphone": "*"
     },
     "files": [
-        "main.ts",
         "README.md",
         "thermalPrint.ts",
         "test.ts"

@@ -55,52 +55,29 @@ namespace thermalPrint {
      * Initialize Thermal Printer
      * @param Configure pin for serial communication
      */
-    //% subcategory=Thermal-Printer
-    //% blockId="ThermalPrinter_setSerial" block="Connect printer RX to %pinRX|TX to %pinTX"
+    
+    //% blockId="ThermalPrinter_setSerial" block="Connect printer RX to %pinRX|TX to %pinTX with baudrate %baudrate"
     //% weight=100 blockExternalInputs=true blockGap=3
+    //% baudrate.defl=9600
     export function thermal_printer_setSerial(pinRX: SerialPin, pinTX: SerialPin, baudrate: BaudRate): void {
 
         serial.redirect(
             pinRX,
             pinTX,
-            BaudRate.BaudRate9600
+            baudrate
         )
-        basic.pause(500)
-
-        let dataBuffer0 = pins.createBuffer(2)
-        dataBuffer0.setNumber(NumberFormat.UInt8LE, 0, 27)
-        dataBuffer0.setNumber(NumberFormat.UInt8LE, 1, 64)  //reset to default
-        serial.writeBuffer(dataBuffer0)
-
         basic.pause(100)
-
-        let dataBuffer = pins.createBuffer(8)
-        dataBuffer.setNumber(NumberFormat.UInt8LE, 0, 27)       //0x1B
-        dataBuffer.setNumber(NumberFormat.UInt8LE, 1, 55)       //0x37
-        dataBuffer.setNumber(NumberFormat.UInt8LE, 2, 7)        //default 64 dots
-        dataBuffer.setNumber(NumberFormat.UInt8LE, 3, heatTime) //default 80
-        dataBuffer.setNumber(NumberFormat.UInt8LE, 4, heatInterval) //default 2 or 20us
-        dataBuffer.setNumber(NumberFormat.UInt8LE, 5, 18)
-        dataBuffer.setNumber(NumberFormat.UInt8LE, 6, 35)
-        let printSetting = (printDensity << 4) | printBreakTime
-        dataBuffer.setNumber(NumberFormat.UInt8LE, 7, printSetting)
-
-        serial.writeBuffer(dataBuffer)
-        basic.pause(500)
     }
 
     /**
      * Print string and line feed
      * @param s is string to be printed, eg: "Hello"
      */
-    //% subcategory=Thermal-Printer
     //% blockId="ThermalPrinter_printString" block="Print string %s"
     //% weight=98 blockGap=3
     export function printString(s: string): void {
         let dataBuffer = pins.createBuffer(1)
-
         serial.writeString(s)
-
         dataBuffer.setNumber(NumberFormat.UInt8LE, 0, 10) //line feed
         serial.writeBuffer(dataBuffer)
     }
@@ -109,48 +86,22 @@ namespace thermalPrint {
      * Print number and line feed
      * @param num is number to be printed, eg: 123
      */
-    //% subcategory=Thermal-Printer
+    
     //% blockId="ThermalPrinter_printNum" block="Print number %num"
     //% weight=97 blockGap=3
     export function printNum(num: number): void {
         let dataBuffer = pins.createBuffer(1)
-
         serial.writeNumber(num)
-
         dataBuffer.setNumber(NumberFormat.UInt8LE, 0, 10) //line feed
         serial.writeBuffer(dataBuffer)
     }
 
 
     /**
-     * Store text in printer memory. Require "New line" command to print
-     * @param s is string to be stored, eg: "Hello World"
-     * @param text will be stored in printer buffer. - you need to send a newLine command to empty buffer and print
-     */
-    //% subcategory=Thermal-Printer
-    //% blockId="ThermalPrinter_printStringBuffer" block="Store string in memory %s"
-    //% weight=96 blockGap=3
-    export function printStringBuffer(s: string): void {
-        serial.writeString(s)
-    }
-
-    /**
-     * Store number in printer memory. Require "New line" command to print
-     * @param num is number to be stored, eg: 123
-     * @param number will be stored in printer buffer. - you need to send a newLine command to empty buffer and print
-     */
-    //% subcategory=Thermal-Printer
-    //% blockId="ThermalPrinter_printNumBuffer" block="Store number in memory %s"
-    //% weight=95 blockGap=3
-    export function printNumBuffer(num: number): void {
-        serial.writeNumber(num)
-    }
-
-    /**
      * New Line
      * @param Sending line feed to the printer
      */
-    //% subcategory=Thermal-Printer
+    
     //% blockId="ThermalPrinter_newLine" block="New line"
     //% weight=90 blockGap=20
     export function LineFeed(): void {
@@ -162,7 +113,7 @@ namespace thermalPrint {
     /**
      * Reset printer
      */
-    //% subcategory=Thermal-Printer
+    
     //% blockId="ThermalPrinter_resetPrint" block="Reset printer"
     //% weight=20 blockGap=3
     export function resetPrinter(): void {
@@ -175,84 +126,9 @@ namespace thermalPrint {
 
 
     /**
-     * Set printing density (1  to 15) and break time (1 to 15)
-     * @param Density is to set printing density, eg: 10
-     * @param BreakTime is to set print break time, eg: 10
-     */
-    //% subcategory=Thermal-Printer
-    //% blockId="ThermalPrinter_setDensityBreakTime" block="Set print density %Density| break-time %BreakTime"
-    //% weight=58  blockExternalInputs=true blockGap=20
-    //% Density.min=1 Density.max=15
-    //% BreakTime.min=1 BreakTime.max=15
-    export function setDensityBreakTime(Density: number, BreakTime: number): void {
-        let pDensity: number
-        pDensity = Density
-        let pBT: number
-        pBT = BreakTime
-        let printSetting: number
-        printSetting = pDensity << 4
-        printSetting = printSetting | pBT
-
-        let dataBuffer = pins.createBuffer(3)
-        dataBuffer.setNumber(NumberFormat.UInt8LE, 0, 18) //DC2
-        dataBuffer.setNumber(NumberFormat.UInt8LE, 1, 10) //#
-        dataBuffer.setNumber(NumberFormat.UInt8LE, 2, printSetting)
-
-        serial.writeBuffer(dataBuffer)
-    }
-
-    /**
-    * Set heating duration (4  to 255, default 80) and interval (2 to 255, default 2)
-    * @param heatTime is to set heating duration, eg: 80
-    * @param heatInterval is to set heating interval, eg: 2
-    */
-    //% subcategory=Thermal-Printer
-    //% blockId="ThermalPrinter_setHeating" block="Set heating duration %heatTime| interval %heatInterval"
-    //% weight=59  blockExternalInputs=true blockGap=3
-    //% heatTime.min=4 heatTime.max=255
-    //% heatInterval.min=2 heatInterval.max=255
-    export function setHeating(heatTime: number, heatInterval: number): void {
-
-        let pheatTime: number
-        pheatTime = heatTime
-        let pheatInterval: number
-        pheatInterval = heatInterval
-
-        let dataBuffer = pins.createBuffer(5)
-        dataBuffer.setNumber(NumberFormat.UInt8LE, 0, 27)       //0x1B
-        dataBuffer.setNumber(NumberFormat.UInt8LE, 1, 55)       //0x37
-        dataBuffer.setNumber(NumberFormat.UInt8LE, 2, 7)        //default 64 dots
-        dataBuffer.setNumber(NumberFormat.UInt8LE, 3, pheatTime) //default 80
-        dataBuffer.setNumber(NumberFormat.UInt8LE, 4, pheatInterval)
-
-        serial.writeBuffer(dataBuffer)
-    }
-
-    /**
-     * Set the line spacing (default is 30)
-     * @param lineSpace is to set the line spacing, eg: 30
-     */
-    //% subcategory=Thermal-Printer 
-    //% blockId="ThermalPrinter_lineSpace" block="Set line spacing  %lineSpace"
-    //% weight=83 blockGap=3
-    //% lineSpace.min=0 lineSpace.max=255
-    export function setLineSpacing(lineSpace: number) {
-        let pLineSpace: number
-        pLineSpace = lineSpace
-
-        let dataBuffer = pins.createBuffer(3)
-        dataBuffer.setNumber(NumberFormat.UInt8LE, 0, 27)
-        dataBuffer.setNumber(NumberFormat.UInt8LE, 1, 51)
-        dataBuffer.setNumber(NumberFormat.UInt8LE, 2, pLineSpace)
-
-        serial.writeBuffer(dataBuffer)
-
-    }
-
-    /**
       * Align text to left, centre or right
       */
-    //% subcategory=Thermal-Printer 
+     
     //% blockId="ThermalPrinter_textAlign" block="Text align to %textAlign"
     //% weight=84 blockGap=3
     export function setTextAlign(textAlign: textAlignment) {
@@ -271,7 +147,7 @@ namespace thermalPrint {
     /**
      * Print underline.
      */
-    //% subcategory=Thermal-Printer 
+     
     //% blockId="ThermalPrinter_underLine" block="Underline %underlineText"
     //% weight=87 blockGap=3
     export function setUnderLine(underlineText: textunderline) {
@@ -290,7 +166,7 @@ namespace thermalPrint {
     /**
      * Set text background color to white/black
      */
-    //% subcategory=Thermal-Printer 
+     
     //% blockId="ThermalPrinter_backGroundColor" block="Set text background to  %backgroundColor"
     //% weight=82 blockGap=20
     export function backGroundColor(backgroundColor: bgColor) {
@@ -313,7 +189,7 @@ namespace thermalPrint {
     /**
      * Set bold On/Off
      */
-    //% subcategory=Thermal-Printer 
+     
     //% blockId="ThermalPrinter_setTextBold" block="Bold %boldText"
     //% weight=89 blockGap=3
     export function setTextBold(boldText: textBold) {
@@ -338,7 +214,7 @@ namespace thermalPrint {
      * @param Width is to set character width, eg: 0
      * @param Height is to set character height, eg: 0
      */
-    //% subcategory=Thermal-Printer 
+     
     //% blockId="ThermalPrinter_setCharacterSize" block="Set character size width %Width| height %Height"
     //% weight=85 blockExternalInputs=true blockGap=3
     //% Width.min=0 Width.max=4
@@ -357,21 +233,6 @@ namespace thermalPrint {
         dataBuffer.setNumber(NumberFormat.UInt8LE, 1, 33)
         dataBuffer.setNumber(NumberFormat.UInt8LE, 2, pSize)
 
-        serial.writeBuffer(dataBuffer)
-    }
-
-
-    /**
-    * Print facotry test page
-    * @param Sending line feed to the printer
-    */
-    //% subcategory=Thermal-Printer
-    //% blockId="ThermalPrinter_printTestPage" block="Print factory test page"
-    //% weight=10 blockGap=8
-    export function printTestPage(): void {
-        let dataBuffer = pins.createBuffer(2)
-        dataBuffer.setNumber(NumberFormat.UInt8LE, 0, 18) //DC2
-        dataBuffer.setNumber(NumberFormat.UInt8LE, 1, 84) //T
         serial.writeBuffer(dataBuffer)
     }
 }
